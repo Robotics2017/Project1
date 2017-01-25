@@ -65,11 +65,10 @@ int main(void)
 
     while (true)
     {
-        time_t start;
-        start = time(NULL);
-
-        //struct timespec tim;
-    //tim.tv_nsec = 100000000;
+	    //time_t start;
+	    //start = time(NULL);
+	    struct timespec tim;
+	    tim.tv_nsec = 100000000; // 1 / 10 seconds
     
     /*
     time_t start = time(NULL);
@@ -80,54 +79,42 @@ int main(void)
         nanosleep(&tim, NULL);
     }
     */
-    
-    /* WORKS BEST
-    int opCount = 0;
-    while (opCount < 10) {
-        printf("%d\n", opCount);
-        opCount = opCount + 1;
-        nanosleep(&tim, NULL);
-    }
-    */
-
-        while ((time(NULL) - start) < 1) {
-
-            while ((time(NULL) - start) < 1 / 10) {
-                //get bump sensor data
-                returnSignal = bump(&serial);
-
-                //determine if bump occured
-                if (returnSignal != 0) {
-                    if (returnSignal == BOTH_BUMPERS) {
-                        activateLED(&serial, 8); // check robot led
-                        activateLED(&serial, 1); // debris led
-                    }
-                    else {
-                        if (returnSignal == LEFT_BUMPER) {
-                            activateLED(&serial, 8); // check robot led
-                        }
-                        if (returnSignal == RIGHT_BUMPER) {
-                            activateLED(&serial, 1); // debris led
-                        }
-                    }
-                }
-            }
-
-        }
-
-        if ((color - stepCount) > 0) { // this works up to stepCount - 1
-            color -= stepCount;
-   		    changeColor(&serial, color);
-   	    } else { // finishes off remaining iteration
-   		    if (color > 0) {
-   			    color = 0;
+	    int opCount = 0;
+	    while (opCount < 10) {
+		    //get bump sensor data
+		    returnSignal = bump(&serial);
+		    
+		    //determine if bump occured
+		    if (returnSignal != 0) {
+			    if (returnSignal == BOTH_BUMPERS) {
+				    activateLED(&serial, 8); // check robot led
+				    activateLED(&serial, 1); // debris led
+			    }
+			    else {
+				    if (returnSignal == LEFT_BUMPER) {
+					    activateLED(&serial, 8); // check robot led
+				    }
+				    if (returnSignal == RIGHT_BUMPER) {
+					    activateLED(&serial, 1); // debris led
+				    }
+			    }
+		    }
+		    opCount = opCount + 1;
+		    nanosleep(&tim, NULL);
+	    }
+	    
+	    if ((color - stepCount) > 0) { // this works up to stepCount - 1
+		    color -= stepCount;
+		    changeColor(&serial, color);
+	    } else { // finishes off remaining iteration
+		    if (color > 0) {
+			    color = 0;
    			    changeColor(&serial, color);
    		    } else { // color = 0
    			    color = 255;
 			    changeColor(&serial, color);
    		    }
-   	    }
+	    }
     }
-    
-    return 0;
+	return 0;
 }
