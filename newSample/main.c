@@ -23,29 +23,27 @@ void init(Serial* serial, byte state)
 unsigned char bump(Serial* serial)
 {
     unsigned char c = 0;
-    serialSend(serial, CmdSensors);
+    serialSend(serial, 142);
     serialSend(serial, 7); //bumps and wheel drops
     serialGetChar(serial, &c);
     c &= 3; //example, c&=3 discards wheel drops
     return c;
 };
 
-void changeColor(Serial* serial, unsigned char c)
+void changeColor(Serial* serial)
 {
     serialSend(serial, 139);
-    serialSend(serial, 4);
-    serialSend(serial, c);
+    serialSend(serial, UserButton);
+    serialSend(serial, color);
     serialSend(serial, 255); //was half intensity (128), now full intensity
 };
 
-void activateLED(Serial* serial, unsigned char c)
+void activateLED(Serial* serial, unsigned char selectLED)
 {
     serialSend(serial, 139);
-    serialSend(serial, c);
-
-    //clean/power must be resent. debris/checkRobot need 3bytes after opcode:139
+    serialSend(serial, selectLED);
     serialSend(serial, color);
-    serialSend(serial, 128);
+    serialSend(serial, 255);
 };
 
 int main(void)
@@ -61,60 +59,53 @@ int main(void)
     init(&serial, 132); //full mode
     
     // display initial color
-    changeColor(&serial, color);
+    changeColor(&serial);
 
     while (true)
     {
-	    //time_t start;
-	    //start = time(NULL);
-	    struct timespec tim;
-	    tim.tv_nsec = 100000000; // 1 / 10 seconds
+   	 
+	int loopCount = 0;
+	
+	struct timespec tim;
+	tim.tv_nsec = 100000000; // 1 / 10 seconds
+	time_t start = time(NULL);
+	
+	
+	while ((time(NULL) - start) < 1) {
+	
+	returnSignal = bump(&serial);
+	
+   	 if (returnSignal != 0) {
+   		 if (returnSignal == BOTH_BUMPERS) {
+   			 activateLED(&serial, 9); // check robot led
+   		 }
+   		 else {
+   			 if (returnSignal == LEFT_BUMPER) {
+   				 activateLED(&serial, 8); // check robot led
+   			 }
+   			 if (returnSignal == RIGHT_BUMPER) {
+   				 activateLED(&serial, 1); // debris led
+   			 }
+   		 }
+
+   	 }
+   	 usleep(100000);
+   	 }// end while(loopCount)
+
+   	 if ((color - stepCount) > 0) { // this works up to stepCount - 1
+   		 color -= stepCount;
+   		 changeColor(&serial);
+   	 } else { // finishes off remaining iteration
+   		 if (color > 0) {
+   			 color = 0;
+   			 changeColor(&serial);
+   		 } else { // color = 0
+   			 color = 255;
+			 changeColor(&serial);
+   		 }
+   	 }
+   	 
+    }
     
-    /*
-    time_t start = time(NULL);
-    int opCount = 0;
-    while ((time(NULL) - start) < 1) {
-        printf("%d\n", opCount);
-        opCount = opCount + 1;
-        nanosleep(&tim, NULL);
-    }
-    */
-	    int opCount = 0;
-	    while (opCount < 10) {
-		    //get bump sensor data
-		    returnSignal = bump(&serial);
-		    
-		    //determine if bump occured
-		    if (returnSignal != 0) {
-			    if (returnSignal == BOTH_BUMPERS) {
-				    activateLED(&serial, 8); // check robot led
-				    activateLED(&serial, 1); // debris led
-			    }
-			    else {
-				    if (returnSignal == LEFT_BUMPER) {
-					    activateLED(&serial, 8); // check robot led
-				    }
-				    if (returnSignal == RIGHT_BUMPER) {
-					    activateLED(&serial, 1); // debris led
-				    }
-			    }
-		    }
-		    opCount = opCount + 1;
-		    nanosleep(&tim, NULL);
-	    }
-	    
-	    if ((color - stepCount) > 0) { // this works up to stepCount - 1
-		    color -= stepCount;
-		    changeColor(&serial, color);
-	    } else { // finishes off remaining iteration
-		    if (color > 0) {
-			    color = 0;
-   			    changeColor(&serial, color);
-   		    } else { // color = 0
-   			    color = 255;
-			    changeColor(&serial, color);
-   		    }
-	    }
-    }
-	return 0;
+    return 0;
 }
