@@ -66,11 +66,6 @@ int main(void)
    	 
 	int loopCount = 0;
 	
-	struct timespec tim;
-	tim.tv_nsec = 100000000; // 1 / 10 seconds
-	time_t start = time(NULL);
-	
-	
 	while ((time(NULL) - start) < 1) {
 	
 	returnSignal = bump(&serial);
