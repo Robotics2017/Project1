@@ -49,27 +49,27 @@ void activateLED(Serial* serial, unsigned char selectLED)
 int main(void)
 {
     unsigned char stepCount = 16;
-    
+
     const unsigned char BOTH_BUMPERS = 3;
     const unsigned char LEFT_BUMPER = 2;
     const unsigned char RIGHT_BUMPER = 1;
     unsigned char returnSignal = 0;
-    
+
     Serial serial;
     init(&serial, 132); //full mode
-    
+
     // display initial color
     changeColor(&serial);
 
     while (true)
     {
-   	 
-	int loopCount = 0;
-	
+
+	time_t start =  time(NULL);
+
 	while ((time(NULL) - start) < 1) {
-	
+
 	returnSignal = bump(&serial);
-	
+
    	 if (returnSignal != 0) {
    		 if (returnSignal == BOTH_BUMPERS) {
    			 activateLED(&serial, 9); // check robot led
@@ -99,8 +99,8 @@ int main(void)
 			 changeColor(&serial);
    		 }
    	 }
-   	 
+
     }
-    
+
     return 0;
 }
